@@ -7,15 +7,18 @@ import { IoManager } from './iomanager';
 export class GdbController {
     private gdbProcess: child_process.ChildProcessWithoutNullStreams | null = null;
     private ioManager: IoManager | null = null;
-    private readonly args: string[] = ['--interpreter=mi3'];
     private eventEmitter: EventEmitter = new EventEmitter();
-    constructor(private readonly path: string, args: string[], private readonly options?: child_process.SpawnOptionsWithoutStdio) {
+    constructor() { }
+    private genArgs(args: string[]) {
+        const result: string[] = ['--interpreter=mi3']
         for (const arg of args) {
             if (!arg.startsWith("--interpreter=")) {
-                this.args.push(arg);
+                result.push(arg);
             }
         }
+        return result;
     }
+
     sendRequest(content: string, readResponse: false, timeout?: number): null;
     sendRequest(content: string, readResponse?: true, timeout?: number): Promise<GdbResponse[]> | null;
     sendRequest(content: string, readResponse: any, timeout?: number): any {
@@ -29,11 +32,11 @@ export class GdbController {
     onResponse(callback: (response: GdbResponse[]) => void) {
         this.eventEmitter.on('response', callback);
     }
-    launch() {
+    launch(path: string, args: string[], options?: child_process.SpawnOptionsWithoutStdio) {
         if (this.gdbProcess !== null) {
             throw Error("GDB already launched.");
         }
-        this.gdbProcess = child_process.spawn(this.path, this.args, this.options);
+        this.gdbProcess = child_process.spawn(path, this.genArgs(args), options);
         this.gdbProcess.on('close', () => {
             this.gdbProcess = null;
             this.ioManager = null;
