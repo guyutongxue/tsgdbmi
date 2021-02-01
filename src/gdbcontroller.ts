@@ -1,4 +1,5 @@
 import * as child_process from 'child_process';
+import EventEmitter from 'events';
 
 import { GdbResponse } from './constants';
 import { IoManager } from './iomanager';
@@ -7,7 +8,7 @@ export class GdbController {
     private gdbProcess: child_process.ChildProcessWithoutNullStreams | null = null;
     private ioManager: IoManager | null = null;
     private readonly args: string[] = ['--interpreter=mi3'];
-    private onResponseCallback: (response: GdbResponse[]) => void = () => { };
+    private eventEmitter: EventEmitter = new EventEmitter();
     constructor(private readonly path: string, args: string[], private readonly options?: child_process.SpawnOptionsWithoutStdio) {
         for (const arg of args) {
             if (!arg.startsWith("--interpreter=")) {
@@ -26,7 +27,7 @@ export class GdbController {
         return this.ioManager.getNextResponse();
     }
     onResponse(callback: (response: GdbResponse[]) => void) {
-        this.onResponseCallback = callback;
+        this.eventEmitter.on('response', callback);
     }
     launch() {
         if (this.gdbProcess !== null) {
@@ -38,7 +39,7 @@ export class GdbController {
             this.ioManager = null;
         });
         this.ioManager = new IoManager(this.gdbProcess.stdin, this.gdbProcess.stdout);
-        this.ioManager.onResponse(this.onResponseCallback);
+        this.ioManager.onResponse(response => this.eventEmitter.emit('response', response));
         return this.getNextResponse(); // header info
     }
     exit() {
