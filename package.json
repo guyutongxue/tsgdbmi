@@ -1,0 +1,20 @@
+{
+  "name": "@guyutx/tsgdbmi",
+  "version": "0.1.0",
+  "description": "Get structured output from GDB/MI, inspired by Pygdbmi",
+  "repository": "https://github.com/Guyutongxue/tsgdbmi",
+  "main": "dist/index.js",
+  "types": "dist/index.js",
+  "scripts": {
+    "build": "npx tsc"
+  },
+  "author": "Guyutongxue",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^14.14.22",
+    "typescript": "^4.1.3"
+  },
+  "dependencies": {
+    "rxjs": "^6.6.3"
+  }
+}
