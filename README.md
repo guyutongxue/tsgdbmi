@@ -5,13 +5,13 @@
 No documentation now. But here's a small example tested under Windows:
 ```ts
 // Create GDB Controller
-const gdb = new GdbController('gdb.exe', [], {});
+const gdb = new GdbController();
 // Set callback when get response from GDB
 gdb.onResponse(value => {
     console.log(value);
 })
 // launch gdb and send request (MI command or CMD command)
-gdb.launch()?.then(value => {
+gdb.launch('gdb.exe', [], {})?.then(value => {
     return gdb.sendRequest("help");
 }).then(value => {
     return gdb.sendRequest("file a.exe");
