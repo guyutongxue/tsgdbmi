@@ -12,7 +12,7 @@ export class GdbController {
     private genArgs(args: string[]) {
         const result: string[] = ['--interpreter=mi3']
         for (const arg of args) {
-            if (!arg.startsWith("--interpreter=")) {
+            if (!arg.startsWith("--interpreter") && !arg.startsWith("-i")) {
                 result.push(arg);
             }
         }
@@ -32,6 +32,9 @@ export class GdbController {
     onResponse(callback: (response: GdbResponse) => void) {
         this.eventEmitter.on('response', callback);
     }
+    onClose(callback: () => void) {
+        this.eventEmitter.on('close', callback);
+    }
     launch(path: string, args: string[], options?: child_process.SpawnOptionsWithoutStdio) {
         if (this.gdbProcess !== null) {
             throw Error("GDB already launched.");
@@ -40,6 +43,7 @@ export class GdbController {
         this.gdbProcess.on('close', () => {
             this.gdbProcess = null;
             this.ioManager = null;
+            this.eventEmitter.emit('close');
         });
         this.ioManager = new IoManager(this.gdbProcess.stdin, this.gdbProcess.stdout);
         this.ioManager.$parsedResponse.subscribe(response => this.eventEmitter.emit('response', response));
