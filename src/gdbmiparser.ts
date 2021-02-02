@@ -61,7 +61,7 @@ export function parseResponse(gdbMiText: string): GdbResponse {
         const matches = GDB_MI_TARGET_OUTPUT_RE.exec(gdbMiText)!;
         const payload = matches[1];
         return {
-            type: 'output',
+            type: 'target',
             message: null,
             payload
         };
