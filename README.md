@@ -8,14 +8,17 @@ No documentation now. But here's a small example tested under Windows:
 const gdb = new GdbController();
 // Set callback when get response from GDB
 gdb.onResponse(value => {
-    console.log(value);
+    if (value.type === "console")
+        console.log(value.payload);
 })
-// launch gdb and send request (MI command or CMD command)
-gdb.launch('gdb.exe', [], {})?.then(value => {
-    return gdb.sendRequest("help");
-}).then(value => {
+// launch gdb
+gdb.launch('gdb.exe', [], {});
+// send request (MI command or CLI command)
+gdb.sendRequest("help")?.then(value => {
+    console.log("response: ", value);
     return gdb.sendRequest("file a.exe");
 }).then(value => {
+    console.log("response: ", value);
     gdb.exit();
 });
 ```

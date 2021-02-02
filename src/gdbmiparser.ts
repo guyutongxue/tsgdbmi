@@ -19,7 +19,11 @@ const GDB_MI_VALUE_START_CHARS = [
     GDB_MI_CHAR_STRING_START
 ]
 
-function parseResponse(gdbMiText: string): GdbResponse {
+function debug(...args: any[]) {
+    // console.debug(args);
+}
+
+export function parseResponse(gdbMiText: string): GdbResponse {
     const stream = new StringStream(gdbMiText);
     if (GDB_MI_NOTIFY_RE.test(gdbMiText)) {
         const { token, message, payload } = getNotifyMsgAndPayload(gdbMiText, stream);
@@ -86,11 +90,11 @@ function assertMatch(acturalStr: string, expectedStr: string) {
 function getNotifyMsgAndPayload(result: string, stream: StringStream) {
     const tokenStr = stream.advancePastChars(['=','*']);
     const token = (tokenStr !== "" ? Number.parseInt(tokenStr) : null);
-    console.debug("parsing message");
-    console.debug(result);
+    debug("parsing message");
+    debug(result);
     const message = stream.advancePastChars([',']);
-    console.debug("parsed message");
-    console.debug(message);
+    debug("parsed message");
+    debug(message);
     const payload = parseDict(stream);
     return { token, message: message.trim(), payload: payload };
 }
@@ -137,38 +141,38 @@ function parseDict(stream: StringStream) {
                 if (["}", ",", ""].includes(c)) {
                     lookAheadForGarbage = false;
                 } else {
-                    console.debug("skipping unexpected character: " + c);
+                    debug("skipping unexpected character: " + c);
                     c = stream.read(1);
                 }
             }
             stream.seek(-1);
         }
     }
-    console.debug("parsed dict");
-    console.debug(obj);
+    debug("parsed dict");
+    debug(obj);
     return obj;
 }
 
 function parseKeyVal(stream: StringStream) {
-    console.debug("parsing key/val");
+    debug("parsing key/val");
     const key = parseKey(stream);
     const value = parseVal(stream);
-    console.debug("parsed key/val");
-    console.debug(key);
-    console.debug(value);
+    debug("parsed key/val");
+    debug(key);
+    debug(value);
     return { key, value };
 }
 
 function parseKey(stream: StringStream) {
-    console.debug("parsing key");
+    debug("parsing key");
     const key = stream.advancePastChars(['=']);
-    console.debug("parsed key:");
-    console.debug(key);
+    debug("parsed key:");
+    debug(key);
     return key;
 }
 
 function parseVal(stream: StringStream) {
-    console.debug("parsing value");
+    debug("parsing value");
     let val: GdbVal;
     while (true) {
         let c = stream.read(1);
@@ -186,13 +190,13 @@ function parseVal(stream: StringStream) {
             val = "";
         }
     }
-    console.debug("parsed value:");
-    console.debug(val);
+    debug("parsed value:");
+    debug(val);
     return val;
 }
 
 function parseArray(stream: StringStream) {
-    console.debug("parsing array");
+    debug("parsing array");
     const arr: GdbArray = [];
     while (true) {
         let c = stream.read(1);
@@ -206,24 +210,7 @@ function parseArray(stream: StringStream) {
             break;
         }
     }
-    console.debug("parsed array:");
-    console.debug(arr);
+    debug("parsed array:");
+    debug(arr);
     return arr;
-}
-
-export class GdbMiParser {
-    private parsedResponse: Subject<GdbResponse[]> = new Subject();
-    $parsedResponse = this.parsedResponse.asObservable();
-    private currentResponseList: GdbResponse[] = [];
-
-    subscribeResponseLine(observable: Observable<string>) {
-        observable.subscribe(value => {
-            const parsed = parseResponse(value);
-            this.currentResponseList.push(parsed);
-            if (parsed.type === "done") {
-                this.parsedResponse.next(this.currentResponseList);
-                this.currentResponseList = [];
-            }
-        })
-    }
 }

@@ -25,11 +25,7 @@ export class GdbController {
         if (this.ioManager === null) return null;
         return this.ioManager?.write(content, readResponse, timeout);
     }
-    getNextResponse() {
-        if (this.ioManager === null) return null;
-        return this.ioManager.getNextResponse();
-    }
-    onResponse(callback: (response: GdbResponse[]) => void) {
+    onResponse(callback: (response: GdbResponse) => void) {
         this.eventEmitter.on('response', callback);
     }
     launch(path: string, args: string[], options?: child_process.SpawnOptionsWithoutStdio) {
@@ -42,8 +38,7 @@ export class GdbController {
             this.ioManager = null;
         });
         this.ioManager = new IoManager(this.gdbProcess.stdin, this.gdbProcess.stdout);
-        this.ioManager.onResponse(response => this.eventEmitter.emit('response', response));
-        return this.getNextResponse(); // header info
+        this.ioManager.$parsedResponse.subscribe(response => this.eventEmitter.emit('response', response));
     }
     exit() {
         if (this.gdbProcess === null) return;
