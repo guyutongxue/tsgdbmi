@@ -19,6 +19,10 @@ export class GdbController {
         return result;
     }
 
+    get isRunning() {
+        return this.gdbProcess !== null;
+    }
+
     sendRequest(content: string, readResponse: false, timeout?: number): null;
     sendRequest(content: string, readResponse?: true, timeout?: number): Promise<GdbResponse[]> | null;
     sendRequest(content: string, readResponse: any, timeout?: number): any {

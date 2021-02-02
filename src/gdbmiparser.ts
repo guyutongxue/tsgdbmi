@@ -48,7 +48,7 @@ export function parseResponse(gdbMiText: string): GdbResponse {
             type: 'console',
             message: null,
             payload
-        }
+        };
     } else if (GDB_MI_LOG_RE.test(gdbMiText)) {
         const matches = GDB_MI_LOG_RE.exec(gdbMiText)!;
         const payload = matches[1];
@@ -56,19 +56,27 @@ export function parseResponse(gdbMiText: string): GdbResponse {
             type: 'log',
             message: null,
             payload
-        }
+        };
+    } else if (GDB_MI_TARGET_OUTPUT_RE.test(gdbMiText)) {
+        const matches = GDB_MI_TARGET_OUTPUT_RE.exec(gdbMiText)!;
+        const payload = matches[1];
+        return {
+            type: 'output',
+            message: null,
+            payload
+        };
     } else if (responseIsFinished(gdbMiText)) {
         return {
             type: 'done',
             message: null,
             payload: null
-        }
+        };
     } else {
         return {
             type: 'output',
             message: null,
             payload: gdbMiText
-        }
+        };
     }
 }
 
