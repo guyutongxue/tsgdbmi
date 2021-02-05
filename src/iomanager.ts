@@ -1,6 +1,6 @@
 import { Readable, Writable } from 'stream';
 import { createInterface } from 'readline';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GdbTimeoutError, GdbResponse, USING_WINDOWS, DEFAULT_GDB_TIMEOUT } from './constants';
 import { parseResponse } from './gdbmiparser';
@@ -8,7 +8,7 @@ import { parseResponse } from './gdbmiparser';
 export class IoManager {
 
     private responseLine: Subject<string> = new Subject();
-    $parsedResponse: Observable<GdbResponse> = this.responseLine.pipe(
+    parsedResponse$: Observable<GdbResponse> = this.responseLine.pipe(
         map(value => {
             const parsed = parseResponse(value);
             if (parsed.type === "result" && this.currentRequest !== null) {
@@ -54,7 +54,7 @@ export class IoManager {
         if (readResponse) {
             if (this.currentRequest === null) return null;
             return Promise.race([
-                this.currentRequest.toPromise(),
+                firstValueFrom(this.currentRequest),
                 this.timeout(timeout)
             ])
         } else {

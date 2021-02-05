@@ -46,7 +46,7 @@ export class GdbController {
             this.eventEmitter.emit('close');
         });
         this.ioManager = new IoManager(this.gdbProcess.stdin, this.gdbProcess.stdout);
-        this.ioManager.$parsedResponse.subscribe(response => this.eventEmitter.emit('response', response));
+        this.ioManager.parsedResponse$.subscribe(response => this.eventEmitter.emit('response', response));
     }
     exit() {
         if (this.gdbProcess === null) return;
