@@ -8,7 +8,7 @@ export class GdbController {
     private gdbProcess: child_process.ChildProcessWithoutNullStreams | null = null;
     private ioManager: IoManager | null = null;
     private eventEmitter: EventEmitter = new EventEmitter();
-    constructor() { }
+    constructor(private encoding: string = 'utf8') { }
     private genArgs(args: string[]) {
         const result: string[] = ['--interpreter=mi3']
         for (const arg of args) {
@@ -45,7 +45,7 @@ export class GdbController {
             this.ioManager = null;
             this.eventEmitter.emit('close');
         });
-        this.ioManager = new IoManager(this.gdbProcess.stdin, this.gdbProcess.stdout);
+        this.ioManager = new IoManager(this.gdbProcess.stdin, this.gdbProcess.stdout, this.encoding);
         this.ioManager.parsedResponse$.subscribe(response => this.eventEmitter.emit('response', response));
     }
     exit() {

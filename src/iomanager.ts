@@ -1,5 +1,6 @@
 import { Readable, Writable } from 'stream';
 import { createInterface } from 'readline';
+import * as iconv from 'iconv-lite';
 import { Observable, Subject, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GdbTimeoutError, GdbResponse, USING_WINDOWS, DEFAULT_GDB_TIMEOUT } from './constants';
@@ -21,9 +22,9 @@ export class IoManager {
     );
     private currentRequest: Subject<GdbResponse> | null = null;
 
-    constructor(private stdin: Writable, private stdout: Readable) {
+    constructor(private stdin: Writable, private stdout: Readable, private encoding: string) {
         const stdout_rl = createInterface({
-            input: stdout
+            input: stdout.pipe(iconv.decodeStream(this.encoding)).pipe(iconv.encodeStream('utf8')),
         });
         stdout_rl.on('line', input => {
             this.responseLine.next(input);
@@ -50,7 +51,7 @@ export class IoManager {
             if (this.currentRequest !== null) throw Error("Last request not resolved yet.");
             this.currentRequest = new Subject();
         }
-        this.stdin.write(content.trim() + (USING_WINDOWS ? '\r\n' : '\n'));
+        this.stdin.write(iconv.encode(content.trim() + (USING_WINDOWS ? '\r\n' : '\n'), this.encoding));
         if (readResponse) {
             if (this.currentRequest === null) return null;
             return Promise.race([

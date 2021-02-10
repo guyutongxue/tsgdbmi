@@ -46,7 +46,7 @@ export class StringStream {
             if (c == '\\') {
                 const c2 = this.rawText[this.index];
                 this.index++;
-                buf += c2;
+                buf += (c + c2);
             } else if (c == '"') {
                 break;
             } else {
