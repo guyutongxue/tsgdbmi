@@ -1,4 +1,4 @@
-import { Observable, Subject } from "rxjs";
+
 import { GdbResponse, GdbVal, GdbDict, GdbArray } from "./constants";
 import { StringStream } from './stringstream';
 
@@ -22,9 +22,9 @@ const GDB_MI_VALUE_START_CHARS = [
 function debug(...args: any[]) {
     // console.debug(args);
 }
-
-export function parseResponse(gdbMiText: string): GdbResponse {
-    const stream = new StringStream(gdbMiText);
+  
+export function parseResponse(gdbMiText: string, encoding: string): GdbResponse {
+    const stream = new StringStream(gdbMiText, encoding);
     if (GDB_MI_NOTIFY_RE.test(gdbMiText)) {
         const { token, message, payload } = getNotifyMsgAndPayload(gdbMiText, stream);
         return {
@@ -43,7 +43,7 @@ export function parseResponse(gdbMiText: string): GdbResponse {
         };
     } else if (GDB_MI_CONSOLE_RE.test(gdbMiText)) {
         const matches = GDB_MI_CONSOLE_RE.exec(gdbMiText)!;
-        const payload = matches[1];
+        const payload = stream.descape(matches[1]);
         return {
             type: 'console',
             message: null,
@@ -51,7 +51,7 @@ export function parseResponse(gdbMiText: string): GdbResponse {
         };
     } else if (GDB_MI_LOG_RE.test(gdbMiText)) {
         const matches = GDB_MI_LOG_RE.exec(gdbMiText)!;
-        const payload = matches[1];
+        const payload = stream.descape(matches[1]);
         return {
             type: 'log',
             message: null,
@@ -191,7 +191,7 @@ function parseVal(stream: StringStream) {
             val = parseArray(stream);
             break;
         } else if (c === '"') {
-            val = stream.advancePastStringWithGdbExcapes();
+            val = stream.descape(stream.advancePastStringWithGdbExcapes());
             break;
         } else {
             console.warn(`unexpected character "${c}". Continuing.`);

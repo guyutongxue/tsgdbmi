@@ -11,7 +11,7 @@ export class IoManager {
     private responseLine: Subject<string> = new Subject();
     parsedResponse$: Observable<GdbResponse> = this.responseLine.pipe(
         map(value => {
-            const parsed = parseResponse(value);
+            const parsed = parseResponse(value, this.encoding);
             if (parsed.type === "result" && this.currentRequest !== null) {
                 this.currentRequest.next(parsed);
                 this.currentRequest.complete();

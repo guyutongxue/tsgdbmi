@@ -1,6 +1,6 @@
 {
   "name": "tsgdbmi",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Get structured output from GDB/MI, inspired by Pygdbmi",
   "repository": "https://github.com/Guyutongxue/tsgdbmi",
   "main": "dist/index.js",
