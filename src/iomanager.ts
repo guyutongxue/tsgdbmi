@@ -1,6 +1,7 @@
 import { Readable, Writable } from 'stream';
 import { createInterface } from 'readline';
 import * as iconv from 'iconv-lite';
+import { Mutex } from 'async-mutex';
 import { Observable, Subject, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GdbTimeoutError, GdbResponse, USING_WINDOWS, DEFAULT_GDB_TIMEOUT } from './constants';
@@ -8,6 +9,7 @@ import { parseResponse } from './gdbmiparser';
 
 export class IoManager {
 
+    private writeMutex: Mutex = new Mutex();
     private responseLine: Subject<string> = new Subject();
     parsedResponse$: Observable<GdbResponse> = this.responseLine.pipe(
         map(value => {
@@ -42,16 +44,19 @@ export class IoManager {
         });
     }
 
-    write(content: string, readResponse: false, timeout?: number): null;
-    write(content: string, readResponse?: true, timeout?: number): Promise<GdbResponse> | null;
-    write(content: string, readResponse: any, timeout: any): any {
+    write(content: string, readResponse: false, timeout?: number): Promise<null>;
+    write(content: string, readResponse?: true, timeout?: number): Promise<GdbResponse | null>;
+    async write(content: string, readResponse: any, timeout: any): Promise<any> {
         if (typeof readResponse === "undefined") readResponse = true;
         if (typeof timeout === "undefined") timeout = DEFAULT_GDB_TIMEOUT;
         if (readResponse) {
             if (this.currentRequest !== null) throw Error("Last request not resolved yet.");
             this.currentRequest = new Subject();
         }
-        this.stdin.write(iconv.encode(content.trim() + (USING_WINDOWS ? '\r\n' : '\n'), this.encoding));
+        const buffer = iconv.encode(content.trim() + (USING_WINDOWS ? '\r\n' : '\n'), this.encoding);
+        await this.writeMutex.runExclusive(() => {
+            this.stdin.write(buffer);
+        });
         if (readResponse) {
             if (this.currentRequest === null) return null;
             return Promise.race([
