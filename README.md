@@ -4,4 +4,8 @@
 
 No documentation now. But you can have a look at `test/test.mjs` as an example.
 
+```
+npm i @gytx/tsgdbmi
+```
+
 This repo is mainly "translated" from [pygdbmi](https://github.com/cs01/pygdbmi). I just adjust (or simplify) its IO manage.
