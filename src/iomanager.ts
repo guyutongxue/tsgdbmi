@@ -2,8 +2,8 @@ import { Readable, Writable } from 'stream';
 import { createInterface } from 'readline';
 import * as iconv from 'iconv-lite';
 import { Mutex } from 'async-mutex';
-import { Observable, Subject, firstValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, Subject, firstValueFrom, throwError } from 'rxjs';
+import { map, tap, timeout as timeoutOp } from 'rxjs/operators';
 import { GdbTimeoutError, GdbResponse, USING_WINDOWS, DEFAULT_GDB_TIMEOUT } from './constants';
 import { parseResponse } from './gdbmiparser';
 
@@ -12,6 +12,7 @@ export class IoManager {
     private writeMutex: Mutex = new Mutex();
     private responseLine: Subject<string> = new Subject();
     parsedResponse$: Observable<GdbResponse> = this.responseLine.pipe(
+        // tap(v => console.log('debug' + v)),
         map(value => {
             const parsed = parseResponse(value, this.encoding);
             if (parsed.type === "result" && this.currentRequest !== null) {
@@ -36,33 +37,26 @@ export class IoManager {
         });
     }
 
-    private timeout(timeout: number) {
-        return new Promise<GdbResponse>((_, reject) => {
-            setTimeout(() => {
-                reject(new GdbTimeoutError());
-            }, timeout);
-        });
-    }
-
-    write(content: string, readResponse: false, timeout?: number): Promise<null>;
-    write(content: string, readResponse?: true, timeout?: number): Promise<GdbResponse | null>;
-    async write(content: string, readResponse: any, timeout: any): Promise<any> {
-        if (typeof readResponse === "undefined") readResponse = true;
+    write(content: string, readResponse?: false, timeout?: number): Promise<null>;
+    write(content: string, readResponse: true, timeout?: number): Promise<GdbResponse | null>;
+    async write(content: string, readResponse: boolean | undefined, timeout: number | undefined): Promise<GdbResponse | null> {
+        if (typeof readResponse === "undefined") readResponse = false;
         if (typeof timeout === "undefined") timeout = DEFAULT_GDB_TIMEOUT;
         if (readResponse) {
             if (this.currentRequest !== null) throw Error("Last request not resolved yet.");
             this.currentRequest = new Subject();
         }
         const buffer = iconv.encode(content.trim() + (USING_WINDOWS ? '\r\n' : '\n'), this.encoding);
-        await this.writeMutex.runExclusive(() => {
-            this.stdin.write(buffer);
-        });
+        this.stdin.write(buffer);
+        console.log("hel");
         if (readResponse) {
             if (this.currentRequest === null) return null;
-            return Promise.race([
-                firstValueFrom(this.currentRequest),
-                this.timeout(timeout)
-            ])
+            return firstValueFrom(this.currentRequest.pipe(
+                timeoutOp({
+                    each: timeout,
+                    with: () => throwError(() => new GdbTimeoutError())
+                }),
+            ));
         } else {
             return null;
         }
