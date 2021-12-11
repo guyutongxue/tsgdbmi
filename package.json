@@ -1,6 +1,6 @@
 {
   "name": "@gytx/tsgdbmi",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Get structured output from GDB/MI, inspired by Pygdbmi",
   "repository": "https://github.com/Guyutongxue/tsgdbmi",
   "main": "dist/index.js",
@@ -15,7 +15,7 @@
     "typescript": "^4.5.0"
   },
   "dependencies": {
-    "async-mutex": "^0.3.0",
+    "colors": "^1.4.0",
     "iconv-lite": "^0.6.2",
     "rxjs": "^7.4.0"
   }

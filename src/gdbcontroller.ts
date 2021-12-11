@@ -23,11 +23,9 @@ export class GdbController {
         return this.gdbProcess !== null;
     }
 
-    sendRequest(content: string, readResponse: false, timeout?: number): null;
-    sendRequest(content: string, readResponse?: true, timeout?: number): Promise<GdbResponse> | null;
-    sendRequest(content: string, readResponse: any, timeout?: number): any {
-        if (this.ioManager === null) return null;
-        return this.ioManager.write(content, readResponse, timeout);
+    sendRequest(content: string, timeout?: number): void {
+        if (this.ioManager === null) return;
+        return this.ioManager.write(content, timeout);
     }
     onResponse(callback: (response: GdbResponse) => void) {
         this.eventEmitter.on('response', callback);
