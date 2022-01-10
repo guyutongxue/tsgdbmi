@@ -4,13 +4,11 @@ import { Observable, Subject, firstValueFrom, throwError } from 'rxjs';
 import { map, tap, timeout as timeoutOp } from 'rxjs/operators';
 import { GdbTimeoutError, GdbResponse, USING_WINDOWS, DEFAULT_GDB_TIMEOUT } from './constants';
 import { parseResponse } from './gdbmiparser';
-import 'colors';
 
 export class IoManager {
 
     private responseLine: Subject<string> = new Subject();
     parsedResponse$: Observable<GdbResponse> = this.responseLine.pipe(
-        // tap(line => console.log(line.green)),
         map(value => {
             const parsed = parseResponse(value, this.encoding);
             if (parsed.type === "result" && this.currentRequest !== null) {
@@ -19,8 +17,7 @@ export class IoManager {
                 this.currentRequest = null;
             }
             return parsed;
-        }),
-        // tap(line => console.log(JSON.stringify(line).magenta)),
+        })
     );
     private currentRequest: Subject<GdbResponse> | null = null;
 
@@ -42,7 +39,6 @@ export class IoManager {
     write(content: string, timeout: number | undefined): void {
         if (typeof timeout === "undefined") timeout = DEFAULT_GDB_TIMEOUT;
         const buffer = iconv.encode(content.trim() + (USING_WINDOWS ? '\r\n' : '\n'), this.encoding);
-        // console.log(content.yellow);
         this.stdin.write(buffer);
     }
 }
